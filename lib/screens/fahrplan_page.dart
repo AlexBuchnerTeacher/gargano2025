@@ -35,7 +35,7 @@ class _FahrplanPageState extends State<FahrplanPage> {
   void initState() {
     super.initState();
 
-    // Alle Sekunde prüfen, welcher Stop aktuell ist
+    // Jede Sekunde prüfen, welcher Stop aktuell ist
     Timer.periodic(const Duration(seconds: 1), (timer) {
       final index = _getCurrentStopIndex();
       if (index != highlightIndex) {
@@ -44,7 +44,7 @@ class _FahrplanPageState extends State<FahrplanPage> {
         });
 
         // Automatisch scrollen zur aktuellen Card
-        final position = index * 100.0; // grobe Höhe einer Card
+        final position = index * 100.0;
         _scrollController.animateTo(
           position,
           duration: const Duration(seconds: 2),
@@ -54,7 +54,6 @@ class _FahrplanPageState extends State<FahrplanPage> {
     });
   }
 
-  /// Findet den Index des letzten erreichten Stops (<= jetzt)
   int _getCurrentStopIndex() {
     final now = DateTime.now();
     for (int i = stops.length - 1; i >= 0; i--) {
@@ -63,10 +62,9 @@ class _FahrplanPageState extends State<FahrplanPage> {
         return i;
       }
     }
-    return 0; // Noch kein Stop erreicht → Start
+    return 0;
   }
 
-  /// Methode zum Ändern der Startzeit
   Future<void> _pickStartDateTime() async {
     final date = await showDatePicker(
       context: context,
@@ -96,11 +94,10 @@ class _FahrplanPageState extends State<FahrplanPage> {
 
     setState(() {
       startTime = newDateTime;
-      highlightIndex = null; // Reset Highlight
+      highlightIndex = null;
     });
   }
 
-  /// Berechnet Uhrzeit-String aus Offset
   String _formatTime(int offsetMinutes) {
     final time = startTime.add(Duration(minutes: offsetMinutes));
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
@@ -108,12 +105,14 @@ class _FahrplanPageState extends State<FahrplanPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
         CountdownBanner(startTime: startTime),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton.icon(
+          child: FilledButton.icon(
             onPressed: _pickStartDateTime,
             icon: const Icon(Icons.edit),
             label: const Text('Startzeit ändern'),
@@ -138,63 +137,40 @@ class _FahrplanPageState extends State<FahrplanPage> {
                 builder: (context, scale, child) {
                   return Transform.scale(
                     scale: scale,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 500),
+                    child: Card(
                       margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: isHighlighted
-                            ? (Theme.of(context).brightness == Brightness.dark
-                                ? Colors.teal.shade400 // Dunkler im Dark Mode
-                                : Colors.teal.shade200) // Heller im Light Mode
-                            : Theme.of(context).cardColor,
+                      color: isHighlighted
+                          ? colorScheme.primaryContainer
+                          : colorScheme.surfaceContainerHighest,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: isHighlighted
-                            ? [
-                                BoxShadow(
-                                  color: Colors.teal.withValues(alpha: 0.6),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                )
-                              ]
-                            : [],
                       ),
+                      elevation: isHighlighted ? 3 : 1,
                       child: ListTile(
                         leading: Text(
                           _formatTime(stop['offset']),
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: isHighlighted
-                                ? (Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black)
-                                : null,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isHighlighted
+                                    ? colorScheme.onPrimaryContainer
+                                    : colorScheme.onSurface,
+                              ),
                         ),
                         title: Text(
                           '${stop['km']} km',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: isHighlighted
-                                ? (Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black)
-                                : Colors.grey,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: isHighlighted
+                                    ? colorScheme.onPrimaryContainer
+                                    : colorScheme.onSurfaceVariant,
+                              ),
                         ),
                         subtitle: Text(
                           stop['desc'],
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: isHighlighted
-                                ? (Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black)
-                                : null,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: isHighlighted
+                                    ? colorScheme.onPrimaryContainer
+                                    : colorScheme.onSurface,
+                              ),
                         ),
                       ),
                     ),

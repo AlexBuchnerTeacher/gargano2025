@@ -58,20 +58,28 @@ class _CountdownBannerState extends State<CountdownBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
-      color: _hasStarted ? Colors.green.shade700 : Colors.teal.shade700,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: _hasStarted
+            ? colorScheme.secondaryContainer
+            : colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Text(
         _hasStarted
             ? 'Seit Start: ${_formatDuration(_timeDiff)}'
             : 'Start in: ${_formatDuration(_timeDiff)}',
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: _hasStarted
+                  ? colorScheme.onSecondaryContainer
+                  : colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.bold,
+            ),
       ),
     );
   }

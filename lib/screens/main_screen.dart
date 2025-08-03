@@ -34,20 +34,25 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        title: const Text(
+        title: Text(
           'Gargano 2025',
-          style: TextStyle(color: Colors.white),
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(color: colorScheme.onPrimary),
         ),
+        backgroundColor: colorScheme.primary,
         actions: [
           IconButton(
             icon: Icon(
               Theme.of(context).brightness == Brightness.dark
-                  ? Icons.wb_sunny          // Sonne bei Dark Mode
-                  : Icons.nightlight_round, // Mond bei Light Mode
-              color: Colors.white,
+                  ? Icons.wb_sunny
+                  : Icons.nightlight_round,
+              color: colorScheme.onPrimary,
             ),
             onPressed: widget.onToggleTheme,
           ),

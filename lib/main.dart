@@ -63,17 +63,15 @@ class _GarganoAppState extends State<GarganoApp> {
       title: 'Gargano 2025',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
-        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
       ),
       darkTheme: ThemeData(
+        useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.teal,
           brightness: Brightness.dark,
         ),
-        useMaterial3: true,
-        brightness: Brightness.dark,
       ),
       themeMode: _themeMode,
       home: WelcomeScreen(onToggleTheme: _toggleThemeMode),

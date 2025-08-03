@@ -21,7 +21,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       duration: const Duration(milliseconds: 800),
     );
 
-    // Animation direkt starten
     _controller.forward();
   }
 
@@ -38,6 +37,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       curve: Curves.easeInOut,
     );
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -46,9 +47,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
-,
-              Theme.of(context).colorScheme.surface,
+              colorScheme.primary.withValues(alpha: 0.2),
+              colorScheme.surfaceContainerHighest,
             ],
           ),
         ),
@@ -73,25 +73,25 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     Icon(
                       Icons.route,
                       size: 80,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: colorScheme.primary,
                     ),
                     const SizedBox(height: 32),
-                    const Text(
+                    Text(
                       'Gargano 2025',
-                      style: TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Dein Fahrplan München → Vieste\nmit Stopps, Restkilometern und Checkliste.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 48),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
                       ),
                       icon: const Icon(Icons.play_arrow),

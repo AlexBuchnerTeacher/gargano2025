@@ -26,7 +26,6 @@ class _ChecklistPageState extends State<ChecklistPage> {
     final savedData = prefs.getString('checklist');
 
     if (savedData != null) {
-      // Daten aus SharedPreferences laden
       categories = Map<String, List<Map<String, dynamic>>>.from(
         jsonDecode(savedData).map((key, value) => MapEntry(
               key,
@@ -35,11 +34,9 @@ class _ChecklistPageState extends State<ChecklistPage> {
             )),
       );
     } else {
-      // JSON-Datei laden
       final jsonString = await rootBundle.loadString('assets/checklist.json');
       final Map<String, dynamic> jsonData = jsonDecode(jsonString);
 
-      // In unsere Struktur mit checked-Status umwandeln
       categories = jsonData.map((key, value) {
         final List<String> items = List<String>.from(value);
         return MapEntry(
@@ -70,7 +67,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
 
   /// Eintrag hinzufügen
   void _addItem(String category) {
-    TextEditingController controller = TextEditingController();
+    final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -84,7 +81,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Abbrechen'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
                 setState(() {
@@ -104,7 +101,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
 
   /// Kategorie hinzufügen
   void _addCategory() {
-    TextEditingController controller = TextEditingController();
+    final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -118,12 +115,12 @@ class _ChecklistPageState extends State<ChecklistPage> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Abbrechen'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
                 setState(() {
                   categories[controller.text] = [];
-                  expandedStates.add(true); // direkt offen
+                  expandedStates.add(true);
                 });
                 _saveChecklist();
                 Navigator.pop(context);
@@ -147,6 +144,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
   @override
   Widget build(BuildContext context) {
     final categoryKeys = categories.keys.toList();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -159,37 +157,53 @@ class _ChecklistPageState extends State<ChecklistPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: ExpansionPanelList(
-          expansionCallback: (int index, bool isExpanded) {
-            setState(() {
-              expandedStates[index] = !isExpanded;
-            });
-          },
-          children: categoryKeys.asMap().entries.map((entry) {
-            final index = entry.key;
-            final category = entry.value;
-            final items = categories[category]!;
+      body: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: categoryKeys.length,
+        itemBuilder: (context, index) {
+          final category = categoryKeys[index];
+          final progress = _getProgress(category);
+          final items = categories[category]!;
 
-            return ExpansionPanel(
-              isExpanded: expandedStates[index],
-              headerBuilder: (context, isExpanded) {
-                return ListTile(
-                  title: Text(
-                    category,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Titel + Fortschrittsbalken
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        category,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "${(progress * 100).toStringAsFixed(0)}%",
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ],
                   ),
-                  subtitle: LinearProgressIndicator(
-                    value: _getProgress(category),
-                    backgroundColor: Colors.grey.shade300,
+                  const SizedBox(height: 6),
+                  LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).colorScheme.primary,
+                      colorScheme.primary,
                     ),
                   ),
-                );
-              },
-              body: Column(
-                children: [
+                  const SizedBox(height: 12),
+
+                  // Einträge
                   ...items.asMap().entries.map((entry) {
                     final itemIndex = entry.key;
                     final item = entry.value;
@@ -197,7 +211,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
                       key: UniqueKey(),
                       direction: DismissDirection.endToStart,
                       background: Container(
-                        color: Colors.red,
+                        color: colorScheme.error,
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: const Icon(Icons.delete, color: Colors.white),
@@ -215,16 +229,21 @@ class _ChecklistPageState extends State<ChecklistPage> {
                       ),
                     );
                   }),
-                  TextButton.icon(
-                    onPressed: () => _addItem(category),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Eintrag hinzufügen'),
+
+                  // Button Eintrag hinzufügen
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => _addItem(category),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Eintrag hinzufügen'),
+                    ),
                   ),
                 ],
               ),
-            );
-          }).toList(),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
