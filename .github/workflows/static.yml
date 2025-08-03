@@ -1,13 +1,10 @@
-# Workflow für Deployment einer Flutter Web-App zu GitHub Pages
-name: Deploy Flutter Web to Pages
+# Workflow für Deployment einer Flutter Web-App auf GitHub Pages
+name: Deploy Flutter Web to GitHub Pages
 
 on:
-  # Läuft bei jedem Push auf den master Branch
   push:
-    branches: ["master"]
-
-  # Manuelles Auslösen möglich
-  workflow_dispatch:
+    branches: ["master"]  # läuft bei jedem Push auf master
+  workflow_dispatch:      # manuell ausführbar
 
 permissions:
   contents: read
@@ -24,8 +21,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
     steps:
-      # 1. Code aus Repository auschecken
+      # 1. Repository auschecken
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -35,23 +33,23 @@ jobs:
         with:
           flutter-version: '3.32.0'
 
-      # 3. Dependencies installieren und Web-Build erzeugen
+      # 3. Dependencies holen und Web-Build mit korrektem base-href erzeugen
       - name: Build Flutter Web
         run: |
           flutter pub get
-          flutter build web --release
+          flutter build web --release --base-href /gargano2025/
 
-      # 4. GitHub Pages vorbereiten
+      # 4. GitHub Pages konfigurieren
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # 5. Web-Build hochladen (nur build/web)
+      # 5. Web-Build hochladen
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'build/web'
 
-      # 6. Deployment ausführen
+      # 6. Deployment auf GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
