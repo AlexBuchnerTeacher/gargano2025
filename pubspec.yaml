@@ -1,6 +1,6 @@
 name: gargano2025
 description: Fahrplan-App München → Vieste mit Checkliste (PWA)
-publish_to: 'none'
+publish_to: 'none' # Verhindert versehentliches Veröffentlichen auf pub.dev
 
 version: 1.0.0+1
 
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # Für Speicherung der Checklisten-Status
+  # Für Speicherung der Checklisten-Status und Theme-Modus
   shared_preferences: ^2.2.3
 
 dev_dependencies:
@@ -19,4 +19,12 @@ dev_dependencies:
   flutter_lints: ^2.0.0
 
 flutter:
+  # Aktiviert Material Icons (notwendig für alle Icons)
   uses-material-design: true
+
+  # Fonts (nur nötig, falls spezielle Noto-Fonts eingebunden werden sollen)
+  # Standard-Material-Icons funktionieren damit sofort
+  # fonts:
+  #   - family: MaterialIcons
+  #     fonts:
+  #       - asset: packages/flutter/src/material/icons/materialicons.ttf
