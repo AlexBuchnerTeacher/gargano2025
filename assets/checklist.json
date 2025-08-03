@@ -1,0 +1,70 @@
+{
+  "Camping & Schlafen": [
+    "Zelt",
+    "Isomatte/Schlafsack",
+    "Campingstuhl",
+    "Taschenlampe/Stirnlampe"
+  ],
+  "Küche & Essen": [
+    "Grill/Campingkocher",
+    "Teller & Besteck",
+    "Pfanne/Töpfe",
+    "Kühlbox",
+    "Gewürze & Öl"
+  ],
+  "Essen & Trinken": [
+    "Snacks für unterwegs",
+    "Wasserflaschen",
+    "Kaffee/Tee",
+    "Frühstückssachen"
+  ],
+  "Strand": [
+    "Handtücher",
+    "Strandmatte",
+    "Sonnenschirm",
+    "Schwimmbrille/Flossen"
+  ],
+  "Sport & Aktivitäten": [
+    "Fahrräder",
+    "Kites/Surfmaterial",
+    "Wanderschuhe",
+    "Bälle/Frisbee"
+  ],
+  "Technik": [
+    "Handy + Ladegerät",
+    "Powerbank",
+    "Kopfhörer",
+    "Kamera",
+    "Adapter/Mehrfachstecker"
+  ],
+  "Kleidung": [
+    "T-Shirts",
+    "Pullover",
+    "Hosen/Shorts",
+    "Unterwäsche & Socken",
+    "Jacke/Regenjacke",
+    "Badesachen",
+    "Schuhe/Sandalen",
+    "Sportkleidung"
+  ],
+  "Hygiene": [
+    "Zahnbürste & Zahnpasta",
+    "Duschgel/Shampoo",
+    "Deo",
+    "Rasierer",
+    "Sonnencreme",
+    "Reiseapotheke"
+  ],
+  "Dokumente": [
+    "Personalausweis/Reisepass",
+    "Führerschein",
+    "Versicherungskarten",
+    "Buchungsbestätigungen",
+    "Kredit-/EC-Karten"
+  ],
+  "Freizeit & Spiele": [
+    "Bücher/eBook-Reader",
+    "Kartenspiele/Brettspiele",
+    "Musik/Kopfhörer"
+  ]
+}

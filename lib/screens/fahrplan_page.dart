@@ -143,7 +143,9 @@ class _FahrplanPageState extends State<FahrplanPage> {
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
                         color: isHighlighted
-                            ? Colors.teal.shade200
+                            ? (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.teal.shade400 // Dunkler im Dark Mode
+                                : Colors.teal.shade200) // Heller im Light Mode
                             : Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: isHighlighted
@@ -159,16 +161,40 @@ class _FahrplanPageState extends State<FahrplanPage> {
                       child: ListTile(
                         leading: Text(
                           _formatTime(stop['offset']),
-                          style: const TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: isHighlighted
+                                ? (Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black)
+                                : null,
+                          ),
                         ),
                         title: Text(
                           '${stop['km']} km',
-                          style: const TextStyle(fontSize: 18, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: isHighlighted
+                                ? (Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black)
+                                : Colors.grey,
+                          ),
                         ),
                         subtitle: Text(
                           stop['desc'],
-                          style: const TextStyle(fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isHighlighted
+                                ? (Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black)
+                                : null,
+                          ),
                         ),
                       ),
                     ),
