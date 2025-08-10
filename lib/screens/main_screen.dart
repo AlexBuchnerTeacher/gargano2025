@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'fahrplan_page.dart';
 import 'checklist_page.dart';
 
+// NEU: Package-Import für Reisekosten-Screen
+import 'package:gargano2025/features/reisekosten/reisekosten_screen.dart';
+
 class MainScreen extends StatefulWidget {
   final int initialTab;
   final VoidCallback onToggleTheme;
-  const MainScreen({super.key, this.initialTab = 0, required this.onToggleTheme});
+  const MainScreen({
+    super.key,
+    this.initialTab = 0,
+    required this.onToggleTheme,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -20,10 +27,11 @@ class _MainScreenState extends State<MainScreen> {
     _selectedIndex = widget.initialTab;
   }
 
+  // const entfernt, damit auch Seiten ohne const-Konstruktor funktionieren
   final List<Widget> _pages = [
     const FahrplanPage(),
     const ChecklistPage(),
-    const Placeholder(),
+    const ReisekostenScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -62,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.route), label: 'Fahrplan'),
           NavigationDestination(icon: Icon(Icons.checklist), label: 'Checkliste'),
-          NavigationDestination(icon: Icon(Icons.arrow_back), label: 'Rückfahrt'),
+          NavigationDestination(icon: Icon(Icons.local_gas_station), label: 'Kosten'),
         ],
       ),
     );

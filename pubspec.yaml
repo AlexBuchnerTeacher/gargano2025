@@ -13,6 +13,10 @@ dependencies:
   cupertino_icons: ^1.0.6
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.0
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.0.0
+  cloud_firestore: ^6.0.0
+  firebase_storage: ^13.0.0
 
 dev_dependencies:
   flutter_test:
@@ -25,6 +29,7 @@ flutter:
 
   assets:
     - assets/checklist.json
+    - assets/data/reisekosten_config.json
     - assets/icons/   # ganzer Ordner eingebunden, vermeidet Pfadprobleme
 
 # ---- flutter_launcher_icons Konfiguration ----

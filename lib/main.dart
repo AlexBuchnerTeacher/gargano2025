@@ -1,8 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// 🔽 Firebase-Imports
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'screens/welcome_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase initialisieren (nutzt die von flutterfire erzeugte Konfiguration)
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Web: Login-Sitzung persistent halten (empfohlen)
+  if (kIsWeb) {
+    await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+  }
+
   runApp(const GarganoApp());
 }
 
