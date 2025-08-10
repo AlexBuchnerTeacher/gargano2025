@@ -1,6 +1,6 @@
 name: gargano2025
 description: A new Flutter project for Urlaubs-Packliste
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
 version: 1.0.0+1
 
@@ -12,14 +12,28 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   shared_preferences: ^2.2.2
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/checklist.json
+    - assets/icons/   # ganzer Ordner eingebunden, vermeidet Pfadprobleme
+
+# ---- flutter_launcher_icons Konfiguration ----
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icons/app_icon.png      # 1024x1024, ohne runde Ecken
+  min_sdk_android: 21
+  # Optional (empfohlen für Android 13+):
+  # adaptive_icon_background: "#FFE9C6"
+  # adaptive_icon_foreground: assets/icons/app_icon_foreground.png
+  # adaptive_icon_monochrome: assets/icons/app_icon_monochrome.png

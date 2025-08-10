@@ -37,22 +37,17 @@ class _MainScreenState extends State<MainScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(
-          'Gargano 2025',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(color: colorScheme.onPrimary),
-        ),
+        title: const Text('Gargano 2025'),
         backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         actions: [
           IconButton(
             icon: Icon(
               Theme.of(context).brightness == Brightness.dark
                   ? Icons.wb_sunny
                   : Icons.nightlight_round,
-              color: colorScheme.onPrimary,
             ),
             onPressed: widget.onToggleTheme,
           ),
@@ -60,6 +55,8 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: NavigationBar(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primary.withValues(alpha: 0.2),
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
         destinations: const [

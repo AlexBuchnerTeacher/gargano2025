@@ -59,19 +59,36 @@ class _GarganoAppState extends State<GarganoApp> {
 
   @override
   Widget build(BuildContext context) {
+    const lightScheme = ColorScheme.light(
+      primary: Color(0xFFFF7A00),
+      primaryContainer: Color(0xFFFFB347),
+      secondary: Color(0xFF007A78),
+      surface: Color(0xFFFFF3E0),
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: Colors.black87,
+    );
+
+    const darkScheme = ColorScheme.dark(
+      primary: Color(0xFFFF7A00),
+      primaryContainer: Color(0xFFFFB347),
+      secondary: Color(0xFF007A78),
+      surface: Color(0xFF2B2B2B),
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: Colors.white70,
+    );
+
     return MaterialApp(
       title: 'Gargano 2025',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        colorScheme: lightScheme,
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-          brightness: Brightness.dark,
-        ),
+        colorScheme: darkScheme,
       ),
       themeMode: _themeMode,
       home: WelcomeScreen(onToggleTheme: _toggleThemeMode),
