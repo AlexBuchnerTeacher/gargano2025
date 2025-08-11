@@ -58,7 +58,6 @@ class _ChecklistPageState extends State<ChecklistPage> {
         SnackBar(content: Text('Packliste aus ${used ? "Cloud" : "Asset"} geladen.')),
       );
     } catch (e) {
-      // letzter Versuch: Asset – falls Cloud & Asset beide scheitern, Snackbar
       try {
         await _seedFromAssets();
         if (!mounted) return;
@@ -89,7 +88,6 @@ class _ChecklistPageState extends State<ChecklistPage> {
         .get();
 
     if (!doc.exists) {
-      // Kein Cloud-Dokument → Asset-Fallback
       await _seedFromAssets();
       return false;
     }
@@ -98,12 +96,10 @@ class _ChecklistPageState extends State<ChecklistPage> {
     final dynamic raw = data['itemsByCategory'] ?? data['items'] ?? data;
 
     if (raw is! Map) {
-      // Unerwartetes Format → Asset-Fallback
       await _seedFromAssets();
       return false;
     }
 
-    // Map<String, dynamic> -> {category: List<dynamic>}
     final Map<String, dynamic> categoriesMap =
         raw.map((k, v) => MapEntry(k.toString(), v));
 
@@ -114,7 +110,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
       final catName = entry.key;
       final dynamic list = entry.value;
 
-      if (list is! List) continue; // nur Listen akzeptieren
+      if (list is! List) continue;
 
       final catRef = _catCol.doc();
       batch.set(catRef, {
@@ -183,63 +179,6 @@ class _ChecklistPageState extends State<ChecklistPage> {
     }
 
     await batch.commit();
-  }
-
-  /// Zurücksetzen mit Cloud-Defaults (Fallback: Asset)
-  Future<void> _confirmAndReset() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Packliste zurücksetzen?'),
-        content: const Text(
-          'Alle Kategorien und Einträge dieser Reise werden gelöscht und aus der Vorlage neu erstellt.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Zurücksetzen'),
-          ),
-        ],
-      ),
-    );
-
-    if (result != true) return;
-
-    setState(() => _busy = true);
-    try {
-      await _deleteCollection(_itemCol); // erst Items löschen
-      await _deleteCollection(_catCol); // dann Kategorien
-      await _seedFromDefaults(); // neu: Cloud → Asset
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Zurücksetzen fehlgeschlagen: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  /// Löscht eine gesamte Collection (paging, Batch-Limit beachten)
-  Future<void> _deleteCollection(
-    CollectionReference<Map<String, dynamic>> col, {
-    int batchSize = 300,
-  }) async {
-    Query<Map<String, dynamic>> query = col.limit(batchSize);
-    while (true) {
-      final snap = await query.get();
-      if (snap.docs.isEmpty) break;
-      final batch = FirebaseFirestore.instance.batch();
-      for (final d in snap.docs) {
-        batch.delete(d.reference);
-      }
-      await batch.commit();
-      if (snap.docs.length < batchSize) break;
-    }
   }
 
   /// Eintrag hinzufügen
@@ -336,9 +275,101 @@ class _ChecklistPageState extends State<ChecklistPage> {
     );
   }
 
+  /// Kategorie umbenennen
+  Future<void> _renameCategory(String catId, String currentName) async {
+    final controller = TextEditingController(text: currentName);
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Kategorie umbenennen'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Neuer Name'),
+          autofocus: true,
+          onSubmitted: (_) => Navigator.of(context).pop(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isEmpty) return;
+              await _catCol.doc(catId).set({
+                'name': newName,
+                'updatedAt': FieldValue.serverTimestamp(),
+              }, SetOptions(merge: true));
+              if (mounted) Navigator.pop(context);
+            },
+            child: const Text('Speichern'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Eintrag löschen
   Future<void> _deleteItem(String itemId) async {
     await _itemCol.doc(itemId).delete();
+  }
+
+  /// Kategorie löschen (inkl. aller Items)
+  Future<void> _deleteCategory(String catId, String catName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Kategorie löschen?'),
+        content: Text(
+          '„$catName“ und alle enthaltenen Einträge werden dauerhaft gelöscht.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton.tonal(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Löschen'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _busy = true);
+    try {
+      // Alle Items der Kategorie löschen
+      const pageSize = 300;
+      while (true) {
+        final snap = await _itemCol
+            .where('categoryId', isEqualTo: catId)
+            .limit(pageSize)
+            .get();
+        if (snap.docs.isEmpty) break;
+        final batch = FirebaseFirestore.instance.batch();
+        for (final d in snap.docs) {
+          batch.delete(d.reference);
+        }
+        await batch.commit();
+        if (snap.docs.length < pageSize) break;
+      }
+      // Kategorie löschen
+      await _catCol.doc(catId).delete();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('„$catName“ gelöscht.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Löschen fehlgeschlagen: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   /// Fortschritt pro Kategorie berechnen
@@ -353,9 +384,66 @@ class _ChecklistPageState extends State<ChecklistPage> {
     return checked / itemDocs.length;
   }
 
+  /// Gesamte Collection löschen (wird beim Reset genutzt)
+  Future<void> _deleteCollection(
+    CollectionReference<Map<String, dynamic>> col, {
+    int batchSize = 300,
+  }) async {
+    Query<Map<String, dynamic>> query = col.limit(batchSize);
+    while (true) {
+      final snap = await query.get();
+      if (snap.docs.isEmpty) break;
+      final batch = FirebaseFirestore.instance.batch();
+      for (final d in snap.docs) {
+        batch.delete(d.reference);
+      }
+      await batch.commit();
+      if (snap.docs.length < batchSize) break;
+    }
+  }
+
+  /// Zurücksetzen mit Cloud-Defaults (Fallback: Asset)
+  Future<void> _confirmAndReset() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Packliste zurücksetzen?'),
+        content: const Text(
+          'Alle Kategorien und Einträge dieser Reise werden gelöscht und aus der Vorlage neu erstellt.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Zurücksetzen'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != true) return;
+
+    setState(() => _busy = true);
+    try {
+      await _deleteCollection(_itemCol); // erst Items löschen
+      await _deleteCollection(_catCol); // dann Kategorien
+      await _seedFromDefaults(); // neu: Cloud → Asset
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Zurücksetzen fehlgeschlagen: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
 
     return AbsorbPointer(
       absorbing: _busy,
@@ -446,43 +534,86 @@ class _ChecklistPageState extends State<ChecklistPage> {
 
                         return Card(
                           margin: const EdgeInsets.symmetric(vertical: 8),
+                          elevation: 1,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: cs.outlineVariant,
+                            ),
                           ),
-                          elevation: 1,
+                          color: cs.surface, // M3 surface
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Titel + Fortschritt
+                                // Titel + Aktionen + Fortschritt in Zeile
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      catName,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.bold),
+                                    Expanded(
+                                      child: Text(
+                                        catName,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
                                     ),
-                                    Text(
-                                      "${(progress * 100).toStringAsFixed(0)}%",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge,
+                                    // Prozentanzeige
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Text(
+                                        "${(progress * 100).toStringAsFixed(0)}%",
+                                        style:
+                                            Theme.of(context).textTheme.labelLarge,
+                                      ),
+                                    ),
+                                    // Kontextmenü
+                                    PopupMenuButton<String>(
+                                      tooltip: 'Optionen',
+                                      onSelected: (value) {
+                                        switch (value) {
+                                          case 'rename':
+                                            _renameCategory(catId, catName);
+                                            break;
+                                          case 'delete':
+                                            _deleteCategory(catId, catName);
+                                            break;
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
+                                          value: 'rename',
+                                          child: ListTile(
+                                            leading: Icon(Icons.edit),
+                                            title: Text('Umbenennen'),
+                                          ),
+                                        ),
+                                        const PopupMenuItem(
+                                          value: 'delete',
+                                          child: ListTile(
+                                            leading: Icon(Icons.delete_outline),
+                                            title: Text('Kategorie löschen'),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 6),
-                                LinearProgressIndicator(
-                                  value: progress,
-                                  backgroundColor:
-                                      colorScheme.surfaceContainerHighest,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    colorScheme.primary,
+                                // Fortschrittsbalken (M3)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    backgroundColor:
+                                        cs.surfaceContainerHighest,
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(cs.primary),
+                                    minHeight: 8,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -497,7 +628,7 @@ class _ChecklistPageState extends State<ChecklistPage> {
                                     key: ValueKey(doc.id),
                                     direction: DismissDirection.endToStart,
                                     background: Container(
-                                      color: colorScheme.error,
+                                      color: cs.error,
                                       alignment: Alignment.centerRight,
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 16),
@@ -506,6 +637,8 @@ class _ChecklistPageState extends State<ChecklistPage> {
                                     ),
                                     onDismissed: (_) => _deleteItem(doc.id),
                                     child: CheckboxListTile(
+                                      controlAffinity:
+                                          ListTileControlAffinity.leading,
                                       title: Text(title),
                                       value: checked,
                                       onChanged: (val) {

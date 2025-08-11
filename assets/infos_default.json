@@ -1,0 +1,9 @@
+﻿{
+  "items": [
+    { "title": "🍕 Pizza kaufen am Umbra Mare" },
+    { "title": "🐟 FischHändler 1 bei Orto Frutta", "details": "8:30–9:30 (Pfingsten & Sommer)" },
+    { "title": "🐟 FischHändler 2", "details": "Nur Bargeld 💸💰", "cashOnly": true },
+    { "title": "Orto Frutta", "details": "Öffnungszeiten 9 - 14 und 15 - 20 Uhr" }
+  ],
+  "version": 1
+}

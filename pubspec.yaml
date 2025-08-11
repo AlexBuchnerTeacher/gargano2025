@@ -33,6 +33,7 @@ flutter:
     - assets/checklist.json
     - assets/data/reisekosten_config.json
     - assets/checklist_default.json
+    - assets/infos_default.json
     - assets/icons/   # eigener Asset-Ordner für Bilder (unabhängig von Launcher-Icons)
 
 # ---- flutter_launcher_icons Konfiguration (auf Root-Ebene!) ----

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'fahrplan_page.dart';
 import 'checklist_page.dart';
 import 'welcome_screen.dart'; // für Navigation zurück zum Login
+import 'infos_tab.dart';      // NEU: Info-Tab
 // Reisekosten-Screen (aus Feature-Paket)
 import 'package:gargano2025/features/reisekosten/reisekosten_screen.dart';
 
@@ -35,6 +36,7 @@ class _MainScreenState extends State<MainScreen> {
     FahrplanPage(),
     ChecklistPage(),
     ReisekostenScreen(),
+    InfosTab(), // NEU
   ];
 
   void _onItemTapped(int index) {
@@ -133,10 +135,9 @@ class _MainScreenState extends State<MainScreen> {
             onDestinationSelected: _onItemTapped,
             destinations: const [
               NavigationDestination(icon: Icon(Icons.route), label: 'Fahrplan'),
-              NavigationDestination(
-                  icon: Icon(Icons.checklist), label: 'Checkliste'),
-              NavigationDestination(
-                  icon: Icon(Icons.local_gas_station), label: 'Kosten'),
+              NavigationDestination(icon: Icon(Icons.checklist), label: 'Checkliste'),
+              NavigationDestination(icon: Icon(Icons.local_gas_station), label: 'Kosten'),
+              NavigationDestination(icon: Icon(Icons.info_outline), label: 'Infos'), // NEU
             ],
           ),
         );
