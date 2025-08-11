@@ -13,6 +13,8 @@ dependencies:
   cupertino_icons: ^1.0.6
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.0
+
+  # --- Firebase ---
   firebase_core: ^4.0.0
   firebase_auth: ^6.0.0
   cloud_firestore: ^6.0.0
@@ -30,15 +32,21 @@ flutter:
   assets:
     - assets/checklist.json
     - assets/data/reisekosten_config.json
-    - assets/icons/   # ganzer Ordner eingebunden, vermeidet Pfadprobleme
+    - assets/icons/   # eigener Asset-Ordner für Bilder (unabhängig von Launcher-Icons)
 
-# ---- flutter_launcher_icons Konfiguration ----
+# ---- flutter_launcher_icons Konfiguration (auf Root-Ebene!) ----
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/icons/app_icon.png      # 1024x1024, ohne runde Ecken
+  image_path: assets/icons/app_icon.png      # 1024x1024 PNG, ohne runde Ecken
   min_sdk_android: 21
-  # Optional (empfohlen für Android 13+):
-  # adaptive_icon_background: "#FFE9C6"
-  # adaptive_icon_foreground: assets/icons/app_icon_foreground.png
-  # adaptive_icon_monochrome: assets/icons/app_icon_monochrome.png
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: assets/icons/app_icon.png
+    background_color: "#FFFFFF"
+    theme_color: "#000000"
+  windows:
+    generate: false
+  macos:
+    generate: false

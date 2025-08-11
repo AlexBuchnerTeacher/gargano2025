@@ -310,7 +310,7 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
             ),
             const SizedBox(height: 6),
             _line('Ö 10‑Tages‑Vignette', _fmtCurrency(r.tollAustriaVignette)),
-            _line('Brenner (pro Richtung)', _fmtCurrency(r.tollBrenner)),
+            _line('Brenner (Videomaut)', _fmtCurrency(r.tollBrenner)),
             _line('Italien Autobahn gesamt', _fmtCurrency(r.tollItaly)),
             const SizedBox(height: 8),
             _line('Summe Maut', _fmtCurrency(r.tollTotal), weight: FontWeight.w600),
