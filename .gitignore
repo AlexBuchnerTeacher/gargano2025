@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Node.js / Firebase scripts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Private keys (Firebase etc.)
+*.json
+!firestore.indexes.json   # Ausnahme für Firestore Index Config
