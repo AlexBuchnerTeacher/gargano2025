@@ -13,8 +13,8 @@ class ChecklistPage extends StatefulWidget {
 }
 
 class _ChecklistPageState extends State<ChecklistPage> {
-  // ---- Firebase Pfade ----
-  final String _tripId = 'default'; // später dynamisch setzen
+  // ---- Reise-Kontext / Pfade ----
+  final String _tripId = 'default'; // TODO: später dynamisch setzen
   late final String _uid;
   late final CollectionReference<Map<String, dynamic>> _catCol;
   late final CollectionReference<Map<String, dynamic>> _itemCol;
@@ -42,59 +42,150 @@ class _ChecklistPageState extends State<ChecklistPage> {
     _seedIfEmpty();
   }
 
-  /// Seedet Kategorien & Items aus assets/checklist.json, falls leer
+  /// Seeden, falls noch keine Kategorien vorhanden sind
   Future<void> _seedIfEmpty() async {
     final cats = await _catCol.limit(1).get();
     if (cats.size > 0) return;
-    await _seedFromAssets();
+    await _seedFromDefaults(); // neu: zuerst Firestore, dann Asset-Fallback
   }
 
-  Future<void> _seedFromAssets() async {
+  /// Seedet aus Firestore-Config (Fallback: Asset)
+  Future<void> _seedFromDefaults() async {
     try {
-      final jsonString = await rootBundle.loadString('assets/checklist.json');
-      final Map<String, dynamic> jsonData = jsonDecode(jsonString);
-
-      final batch = FirebaseFirestore.instance.batch();
-
-      int catIdx = 0;
-      for (final entry in jsonData.entries) {
-        final catName = entry.key.toString();
-        final catRef = _catCol.doc();
-        batch.set(catRef, {
-          'name': catName,
-          'idx': catIdx++,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-
-        final List items = (entry.value as List);
-        int itemIdx = 0;
-        for (final title in items) {
-          final itemRef = _itemCol.doc();
-          batch.set(itemRef, {
-            'categoryId': catRef.id,
-            'title': title.toString(),
-            'checked': false,
-            'idx': itemIdx++,
-            'qty': null,
-            'note': null,
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-      }
-
-      await batch.commit();
-    } catch (e) {
+      final used = await _seedFromFirestore();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Seed fehlgeschlagen: $e')),
+        SnackBar(content: Text('Packliste aus ${used ? "Cloud" : "Asset"} geladen.')),
       );
+    } catch (e) {
+      // letzter Versuch: Asset – falls Cloud & Asset beide scheitern, Snackbar
+      try {
+        await _seedFromAssets();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Packliste aus Asset geladen.')),
+        );
+      } catch (e2) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Seed fehlgeschlagen: $e2')),
+        );
+      }
     }
   }
 
+  /// Liest Defaults aus Firestore und seedet sie in die User-Collections.
+  /// Erwartet das Dokument: config/checklist_default
+  ///
+  /// Unterstützte Formate:
+  ///   A) { itemsByCategory: { "Küche": ["Pfanne","Öl"], ... }, version: n, updatedAt: ts }
+  ///   B) { "Küche": ["Pfanne","Öl"], "Dokumente": ["Pass",...], ... }  (reines Map wie Asset)
+  ///
+  /// Rückgabewert: true, wenn Cloud verwendet wurde; false, wenn auf Asset zurückgefallen wird.
+  Future<bool> _seedFromFirestore() async {
+    final doc = await FirebaseFirestore.instance
+        .collection('config')
+        .doc('checklist_default')
+        .get();
 
-  // --- Ersetze den obigen Dialog durch eine Version mit richtigen Callbacks ---
+    if (!doc.exists) {
+      // Kein Cloud-Dokument → Asset-Fallback
+      await _seedFromAssets();
+      return false;
+    }
+
+    final data = doc.data()!;
+    final dynamic raw = data['itemsByCategory'] ?? data['items'] ?? data;
+
+    if (raw is! Map) {
+      // Unerwartetes Format → Asset-Fallback
+      await _seedFromAssets();
+      return false;
+    }
+
+    // Map<String, dynamic> -> {category: List<dynamic>}
+    final Map<String, dynamic> categoriesMap =
+        raw.map((k, v) => MapEntry(k.toString(), v));
+
+    final batch = FirebaseFirestore.instance.batch();
+
+    int catIdx = 0;
+    for (final entry in categoriesMap.entries) {
+      final catName = entry.key;
+      final dynamic list = entry.value;
+
+      if (list is! List) continue; // nur Listen akzeptieren
+
+      final catRef = _catCol.doc();
+      batch.set(catRef, {
+        'name': catName,
+        'idx': catIdx++,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      int itemIdx = 0;
+      for (final item in list) {
+        final title = item?.toString().trim();
+        if (title == null || title.isEmpty) continue;
+
+        final itemRef = _itemCol.doc();
+        batch.set(itemRef, {
+          'categoryId': catRef.id,
+          'title': title,
+          'checked': false,
+          'idx': itemIdx++,
+          'qty': null,
+          'note': null,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
+    await batch.commit();
+    return true;
+  }
+
+  /// Seedet aus assets/checklist.json (altes Default-Format)
+  Future<void> _seedFromAssets() async {
+    final jsonString = await rootBundle.loadString('assets/checklist.json');
+    final Map<String, dynamic> jsonData = jsonDecode(jsonString);
+
+    final batch = FirebaseFirestore.instance.batch();
+
+    int catIdx = 0;
+    for (final entry in jsonData.entries) {
+      final catName = entry.key.toString();
+      final catRef = _catCol.doc();
+      batch.set(catRef, {
+        'name': catName,
+        'idx': catIdx++,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      final List items = (entry.value as List);
+      int itemIdx = 0;
+      for (final title in items) {
+        final itemRef = _itemCol.doc();
+        batch.set(itemRef, {
+          'categoryId': catRef.id,
+          'title': title.toString(),
+          'checked': false,
+          'idx': itemIdx++,
+          'qty': null,
+          'note': null,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
+    await batch.commit();
+  }
+
+  /// Zurücksetzen mit Cloud-Defaults (Fallback: Asset)
   Future<void> _confirmAndReset() async {
     final result = await showDialog<bool>(
       context: context,
@@ -121,12 +212,8 @@ class _ChecklistPageState extends State<ChecklistPage> {
     setState(() => _busy = true);
     try {
       await _deleteCollection(_itemCol); // erst Items löschen
-      await _deleteCollection(_catCol);  // dann Kategorien
-      await _seedFromAssets();           // erneut seeden
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Packliste zurückgesetzt.')),
-      );
+      await _deleteCollection(_catCol); // dann Kategorien
+      await _seedFromDefaults(); // neu: Cloud → Asset
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -228,7 +315,8 @@ class _ChecklistPageState extends State<ChecklistPage> {
             onPressed: () async {
               if (controller.text.trim().isEmpty) return;
 
-              final last = await _catCol.orderBy('idx', descending: true).limit(1).get();
+              final last =
+                  await _catCol.orderBy('idx', descending: true).limit(1).get();
               final nextIdx = last.docs.isEmpty
                   ? 0
                   : ((last.docs.first.data()['idx'] as num?)?.toInt() ?? 0) + 1;
@@ -382,8 +470,9 @@ class _ChecklistPageState extends State<ChecklistPage> {
                                     ),
                                     Text(
                                       "${(progress * 100).toStringAsFixed(0)}%",
-                                      style:
-                                          Theme.of(context).textTheme.labelLarge,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
                                     ),
                                   ],
                                 ),
@@ -450,7 +539,6 @@ class _ChecklistPageState extends State<ChecklistPage> {
               },
             ),
           ),
-
           if (_busy)
             Positioned.fill(
               child: Container(

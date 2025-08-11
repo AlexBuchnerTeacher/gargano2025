@@ -98,10 +98,16 @@ class _FahrplanPageState extends State<FahrplanPage> {
     }
     _uid = user.uid;
 
-    final base =
-        FirebaseFirestore.instance.collection('users').doc(_uid).collection('trips').doc(_tripId);
-    _metaDoc = base.collection('meta').doc('main'); // /users/{uid}/trips/{tripId}/meta/main
-    _itineraryCol = base.collection('itinerary');   // /users/{uid}/trips/{tripId}/itinerary
+    final base = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_uid)
+        .collection('trips')
+        .doc(_tripId);
+    _metaDoc = base
+        .collection('meta')
+        .doc('main'); // /users/{uid}/trips/{tripId}/meta/main
+    _itineraryCol =
+        base.collection('itinerary'); // /users/{uid}/trips/{tripId}/itinerary
 
     _initMetaAndTicker();
   }
@@ -301,7 +307,9 @@ class _FahrplanPageState extends State<FahrplanPage> {
 
           final int maxOffset = stops.isEmpty
               ? 0
-              : stops.map<int>((e) => e['offset'] as int).reduce((a, b) => a > b ? a : b);
+              : stops
+                  .map<int>((e) => e['offset'] as int)
+                  .reduce((a, b) => a > b ? a : b);
           final DateTime arrival = startTime.add(Duration(minutes: maxOffset));
 
           return Column(

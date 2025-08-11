@@ -65,9 +65,9 @@ class FuelPrices {
 class TollsConfig {
   final double austriaVignette; // 10-Tages-Vignette
   final bool austriaVignetteNeededRoundtrip; // bleibt als Infoflag
-  final double brennerPerDirection;          // € je Richtung
-  final double italySection1PerDirection;    // Brenner–Modena
-  final double italySection2PerDirection;    // Modena–Vieste
+  final double brennerPerDirection; // € je Richtung
+  final double italySection1PerDirection; // Brenner–Modena
+  final double italySection2PerDirection; // Modena–Vieste
 
   const TollsConfig({
     required this.austriaVignette,
@@ -80,7 +80,8 @@ class TollsConfig {
   factory TollsConfig.fromJson(Map<String, dynamic> json) => TollsConfig(
         austriaVignette: (json['tolls']['austria_vignette'] as num).toDouble(),
         austriaVignetteNeededRoundtrip:
-            (json['tolls']['austria_vignette_needed_roundtrip'] as bool? ?? true),
+            (json['tolls']['austria_vignette_needed_roundtrip'] as bool? ??
+                true),
         brennerPerDirection:
             (json['tolls']['brenner_per_direction'] as num).toDouble(),
         italySection1PerDirection:
@@ -119,10 +120,10 @@ class CostBreakdown {
   final double distanceKm;
   final double litersNeeded;
   final double fuelPriceUsed; // €/L
-  final double fuelCost;      // €
+  final double fuelCost; // €
   final double tollAustriaVignette; // €
-  final double tollBrenner;         // €
-  final double tollItaly;           // €
+  final double tollBrenner; // €
+  final double tollItaly; // €
   double get tollTotal => tollAustriaVignette + tollBrenner + tollItaly;
   double get total => fuelCost + tollTotal;
 
@@ -243,8 +244,9 @@ class ReisekostenCalculator {
     double? customFuelPricePerL,
     double? customConsumptionLPer100,
   }) {
-    final distance =
-        roundTrip ? config.route.distanceKmRoundTrip : config.route.distanceKmOneWay;
+    final distance = roundTrip
+        ? config.route.distanceKmRoundTrip
+        : config.route.distanceKmOneWay;
 
     final liters = litersNeeded(
       roundTrip: roundTrip,

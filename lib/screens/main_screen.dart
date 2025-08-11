@@ -133,8 +133,10 @@ class _MainScreenState extends State<MainScreen> {
             onDestinationSelected: _onItemTapped,
             destinations: const [
               NavigationDestination(icon: Icon(Icons.route), label: 'Fahrplan'),
-              NavigationDestination(icon: Icon(Icons.checklist), label: 'Checkliste'),
-              NavigationDestination(icon: Icon(Icons.local_gas_station), label: 'Kosten'),
+              NavigationDestination(
+                  icon: Icon(Icons.checklist), label: 'Checkliste'),
+              NavigationDestination(
+                  icon: Icon(Icons.local_gas_station), label: 'Kosten'),
             ],
           ),
         );

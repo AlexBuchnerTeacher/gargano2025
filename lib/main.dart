@@ -1,30 +1,74 @@
+// ====== IMPORTS ======
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// 🔽 Firebase-Imports
+// Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Screens
 import 'screens/welcome_screen.dart';
 
+// ====== DEV: Einmal-Uploader-Schalter ======
+// Für EINEN Lauf auf true setzen, App starten, danach wieder false!
+const bool kDoOneTimeUpload = false;
+
+// ====== DEV: Einmal-Uploader-Funktion ======
+// Liest assets/checklist_default.json und legt config/checklist_default in Firestore an,
+// falls es noch nicht existiert.
+Future<void> uploadDefaultChecklistOnce() async {
+  final docRef =
+      FirebaseFirestore.instance.collection('config').doc('checklist_default');
+
+  final exists = (await docRef.get()).exists;
+  if (exists) {
+    debugPrint('ℹ️ checklist_default existiert bereits – Upload übersprungen.');
+    return;
+  }
+
+  final jsonString =
+      await rootBundle.loadString('assets/checklist_default.json');
+  final Map<String, dynamic> jsonData = jsonDecode(jsonString);
+
+  // Serverseitigen Zeitstempel setzen
+  jsonData['updatedAt'] = FieldValue.serverTimestamp();
+
+  await docRef.set(jsonData, SetOptions(merge: false));
+  debugPrint('✅ checklist_default erfolgreich nach Firestore hochgeladen.');
+}
+
+// ====== MAIN ======
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase initialisieren (nutzt die von flutterfire erzeugte Konfiguration)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Web: Login-Sitzung persistent halten (empfohlen)
   if (kIsWeb) {
     await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+  }
+
+  // Für den Upload sicherstellen, dass wir angemeldet sind (z.B. anonym)
+  if (FirebaseAuth.instance.currentUser == null) {
+    await FirebaseAuth.instance.signInAnonymously();
+  }
+
+  // Nur EINMAL ausführen: Schalter kurz auf true setzen, App starten, dann wieder false
+  if (kDoOneTimeUpload) {
+    await uploadDefaultChecklistOnce();
   }
 
   runApp(const GarganoApp());
 }
 
+// ====== APP WIDGET ======
 class GarganoApp extends StatefulWidget {
   const GarganoApp({super.key});
 

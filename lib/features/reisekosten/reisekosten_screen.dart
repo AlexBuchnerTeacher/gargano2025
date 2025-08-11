@@ -25,8 +25,8 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
   bool _twoVignettes = false;
   bool _useCustomFuelPrice = false;
 
-  double _consumption = 7.0;       // L/100 km
-  double _customFuelPrice = 1.88;  // €/L
+  double _consumption = 7.0; // L/100 km
+  double _customFuelPrice = 1.88; // €/L
 
   CostBreakdown? _result;
 
@@ -45,9 +45,12 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
     if (user == null) throw StateError('Kein Benutzer eingeloggt.');
     _uid = user.uid;
     _prefsDoc = FirebaseFirestore.instance
-        .collection('users').doc(_uid)
-        .collection('trips').doc(_tripId)
-        .collection('costs').doc('userPrefs');
+        .collection('users')
+        .doc(_uid)
+        .collection('trips')
+        .doc(_tripId)
+        .collection('costs')
+        .doc('userPrefs');
     _init();
   }
 
@@ -72,7 +75,8 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
         _twoVignettes = (d['twoVignettes'] as bool?) ?? false;
         _useCustomFuelPrice = (d['useCustomFuelPrice'] as bool?) ?? false;
         _consumption = (d['consumption'] as num?)?.toDouble() ?? defCons;
-        _customFuelPrice = (d['customFuelPrice'] as num?)?.toDouble() ?? defPrice;
+        _customFuelPrice =
+            (d['customFuelPrice'] as num?)?.toDouble() ?? defPrice;
       } else {
         _roundTrip = true;
         _twoVignettes = false;
@@ -108,7 +112,8 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
   }
 
   // -------- helpers --------
-  String _fmtCurrency(double v) => '${v.toStringAsFixed(2).replaceAll('.', ',')} €';
+  String _fmtCurrency(double v) =>
+      '${v.toStringAsFixed(2).replaceAll('.', ',')} €';
   String _fmtNumber(double v) => v.toStringAsFixed(2).replaceAll('.', ',');
   double _parseNum(String s, {double fallback = 0}) =>
       double.tryParse(s.replaceAll(',', '.')) ?? fallback;
@@ -128,7 +133,8 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
     if (_calc == null) return;
 
     _consumption = _parseNum(_consumptionCtrl.text, fallback: _consumption);
-    _customFuelPrice = _parseNum(_fuelPriceCtrl.text, fallback: _customFuelPrice);
+    _customFuelPrice =
+        _parseNum(_fuelPriceCtrl.text, fallback: _customFuelPrice);
 
     final price = _useCustomFuelPrice ? _customFuelPrice : null;
     final res = _calc!.calculate(
@@ -180,19 +186,22 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
               Expanded(
                 child: TextField(
                   controller: _consumptionCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                     labelText: 'Verbrauch (L/100 km)',
                     border: OutlineInputBorder(),
                   ),
                   onChanged: (_) => _scheduleRecalcSave(),
                   onEditingComplete: () {
-                    _consumption = _parseNum(_consumptionCtrl.text, fallback: _consumption);
+                    _consumption = _parseNum(_consumptionCtrl.text,
+                        fallback: _consumption);
                     _consumptionCtrl.text = _fmtNumber(_consumption);
                     _recalcAndSave();
                   },
                   onSubmitted: (_) {
-                    _consumption = _parseNum(_consumptionCtrl.text, fallback: _consumption);
+                    _consumption = _parseNum(_consumptionCtrl.text,
+                        fallback: _consumption);
                     _consumptionCtrl.text = _fmtNumber(_consumption);
                     _recalcAndSave();
                   },
@@ -228,19 +237,22 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
           if (_useCustomFuelPrice)
             TextField(
               controller: _fuelPriceCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(
                 labelText: 'Preis (€/L)',
                 border: OutlineInputBorder(),
               ),
               onChanged: (_) => _scheduleRecalcSave(),
               onEditingComplete: () {
-                _customFuelPrice = _parseNum(_fuelPriceCtrl.text, fallback: _customFuelPrice);
+                _customFuelPrice =
+                    _parseNum(_fuelPriceCtrl.text, fallback: _customFuelPrice);
                 _fuelPriceCtrl.text = _fmtNumber(_customFuelPrice);
                 _recalcAndSave();
               },
               onSubmitted: (_) {
-                _customFuelPrice = _parseNum(_fuelPriceCtrl.text, fallback: _customFuelPrice);
+                _customFuelPrice =
+                    _parseNum(_fuelPriceCtrl.text, fallback: _customFuelPrice);
                 _fuelPriceCtrl.text = _fmtNumber(_customFuelPrice);
                 _recalcAndSave();
               },
@@ -256,7 +268,8 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
     );
   }
 
-  Widget _buildResultCard(CostBreakdown r, BuildContext context, ColorScheme cs) {
+  Widget _buildResultCard(
+      CostBreakdown r, BuildContext context, ColorScheme cs) {
     final theme = Theme.of(context);
     final caption = TextStyle(color: cs.onSurface.withValues(alpha: 0.6));
 
@@ -272,7 +285,8 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
               children: [
                 Text(
                   r.roundTrip ? 'Hin & Zurück' : 'Nur Hinfahrt',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 Text('${r.distanceKm.toStringAsFixed(0)} km',
                     style: theme.textTheme.titleMedium),
@@ -300,23 +314,27 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
 
             const Divider(height: 24),
 
-            _line('Kraftstoffkosten', _fmtCurrency(r.fuelCost), weight: FontWeight.w600),
+            _line('Kraftstoffkosten', _fmtCurrency(r.fuelCost),
+                weight: FontWeight.w600),
             const SizedBox(height: 8),
 
             Align(
               alignment: Alignment.centerLeft,
               child: Text('Maut / Vignetten',
-                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
             ),
             const SizedBox(height: 6),
             _line('Ö 10‑Tages‑Vignette', _fmtCurrency(r.tollAustriaVignette)),
             _line('Brenner (Videomaut)', _fmtCurrency(r.tollBrenner)),
             _line('Italien Autobahn gesamt', _fmtCurrency(r.tollItaly)),
             const SizedBox(height: 8),
-            _line('Summe Maut', _fmtCurrency(r.tollTotal), weight: FontWeight.w600),
+            _line('Summe Maut', _fmtCurrency(r.tollTotal),
+                weight: FontWeight.w600),
 
             const Divider(height: 24),
-            _line('GESAMTKOSTEN', _fmtCurrency(r.total), weight: FontWeight.w800, size: 16),
+            _line('GESAMTKOSTEN', _fmtCurrency(r.total),
+                weight: FontWeight.w800, size: 16),
           ],
         ),
       ),
@@ -328,7 +346,9 @@ class _ReisekostenScreenState extends State<ReisekostenScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: Text(left, style: TextStyle(fontWeight: weight, fontSize: size))),
+        Expanded(
+            child: Text(left,
+                style: TextStyle(fontWeight: weight, fontSize: size))),
         Text(right, style: TextStyle(fontWeight: weight, fontSize: size)),
       ],
     );
