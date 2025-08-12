@@ -282,7 +282,7 @@ class _InfosTabState extends State<InfosTab> {
               if (title.isEmpty) return;
 
               if (isEdit) {
-                await _infoCol.doc(doc!.id).set({
+                await _infoCol.doc(doc.id).set({
                   'title': title,
                   'details': detailsController.text.trim().isEmpty
                       ? null

@@ -183,54 +183,100 @@ class _ChecklistPageState extends State<ChecklistPage> {
 
   /// Eintrag hinzufügen
   Future<void> _addItem(String categoryId) async {
-    final controller = TextEditingController();
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Neuen Eintrag hinzufügen'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Bezeichnung'),
-          autofocus: true,
-          onSubmitted: (_) => Navigator.of(context).pop(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (controller.text.trim().isEmpty) return;
+  final controller = TextEditingController();
 
-              final last = await _itemCol
-                  .where('categoryId', isEqualTo: categoryId)
-                  .orderBy('idx', descending: true)
-                  .limit(1)
-                  .get();
+  Future<void> submit() async {
+    final text = controller.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte eine Bezeichnung eingeben.')),
+      );
+      return;
+    }
 
-              final nextIdx = last.docs.isEmpty
-                  ? 0
-                  : ((last.docs.first.data()['idx'] as num?)?.toInt() ?? 0) + 1;
+    try {
+      int nextIdx;
 
-              await _itemCol.add({
-                'categoryId': categoryId,
-                'title': controller.text.trim(),
-                'checked': false,
-                'idx': nextIdx,
-                'qty': null,
-                'note': null,
-                'createdAt': FieldValue.serverTimestamp(),
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
-              if (mounted) Navigator.pop(context);
-            },
-            child: const Text('Hinzufügen'),
-          ),
-        ],
-      ),
-    );
+      try {
+        // Schneller Weg (benötigt Composite Index)
+        final last = await _itemCol
+            .where('categoryId', isEqualTo: categoryId)
+            .orderBy('idx', descending: true)
+            .limit(1)
+            .get();
+
+        nextIdx = last.docs.isEmpty
+            ? 0
+            : ((last.docs.first.data()['idx'] as num?)?.toInt() ?? 0) + 1;
+      } on FirebaseException catch (e) {
+        // Fallback ohne Index: alle holen, max(idx) + 1
+        if (e.code == 'failed-precondition') {
+          final all = await _itemCol
+              .where('categoryId', isEqualTo: categoryId)
+              .get();
+          int maxIdx = -1;
+          for (final d in all.docs) {
+            final i = (d.data()['idx'] as num?)?.toInt() ?? 0;
+            if (i > maxIdx) maxIdx = i;
+          }
+          nextIdx = maxIdx + 1;
+
+          // Nutzerhinweis (einmalig ok)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Hinweis: Erstelle einen Firestore-Index für categoryId+idx, um es schneller zu machen.'),
+            ),
+          );
+        } else {
+          rethrow;
+        }
+      }
+
+      await _itemCol.add({
+        'categoryId': categoryId,
+        'title': text,
+        'checked': false,
+        'idx': nextIdx,
+        'qty': null,
+        'note': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hinzufügen fehlgeschlagen: $e')),
+      );
+    }
   }
+
+  await showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Neuen Eintrag hinzufügen'),
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(hintText: 'Bezeichnung'),
+        autofocus: true,
+        onSubmitted: (_) => submit(), // ⟵ Enter fügt jetzt hinzu
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Abbrechen'),
+        ),
+        FilledButton(
+          onPressed: submit,
+          child: const Text('Hinzufügen'),
+        ),
+      ],
+    ),
+  );
+}
+
 
   /// Kategorie hinzufügen
   Future<void> _addCategory() async {
