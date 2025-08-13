@@ -31,7 +31,7 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
+ /build/
 
 # Symbolication related
 app.*.symbols
@@ -51,8 +51,4 @@ yarn-debug.log*
 yarn-error.log*
 
 # Private keys (Firebase etc.)
-*.json
 !firestore.indexes.json   # Ausnahme für Firestore Index Config
-# --- allow tracked JSON assets ---
-!assets/**/*.json
-

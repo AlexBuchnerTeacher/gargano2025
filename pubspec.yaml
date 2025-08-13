@@ -36,6 +36,19 @@ flutter:
     - assets/infos_default.json
     - assets/icons/   # eigener Asset-Ordner für Bilder (unabhängig von Launcher-Icons)
 
+  fonts:
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
+    - family: NotoSansSymbols2
+      fonts:
+        - asset: assets/fonts/NotoSansSymbols2-Regular.ttf
+    - family: NotoEmoji
+      fonts:
+        - asset: assets/fonts/NotoEmoji-Regular.ttf
+
 # ---- flutter_launcher_icons Konfiguration (auf Root-Ebene!) ----
 flutter_launcher_icons:
   android: true

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show rootBundle, HapticFeedback; // <— Haptik dazu
 import 'package:url_launcher/url_launcher.dart';
 
 class InfosTab extends StatefulWidget {
@@ -228,99 +228,154 @@ class _InfosTabState extends State<InfosTab> {
   }
 
   // ------------------- CRUD -------------------
+  // >>> Bottom-Sheet Editor mit Haptik <<<
   Future<void> _addOrEditInfo({DocumentSnapshot<Map<String, dynamic>>? doc}) async {
     final isEdit = doc != null;
     final data = doc?.data();
-    final titleController = TextEditingController(text: data?['title']);
+
+    final titleController   = TextEditingController(text: data?['title']);
     final detailsController = TextEditingController(text: data?['details']);
-    final linkController = TextEditingController(text: data?['link']);
+    final linkController    = TextEditingController(text: data?['link']);
+
     bool cashOnly = data?['cashOnly'] ?? false;
-    bool pinned = data?['pinned'] ?? false;
+    bool pinned   = data?['pinned'] ?? false;
 
-    await showDialog(
+    await showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(isEdit ? 'Info bearbeiten' : 'Neue Info'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Titel'),
-              ),
-              TextField(
-                controller: detailsController,
-                decoration: const InputDecoration(labelText: 'Details'),
-                maxLines: 3,
-              ),
-              TextField(
-                controller: linkController,
-                decoration: const InputDecoration(labelText: 'Link (optional)'),
-              ),
-              SwitchListTile(
-                title: const Text('Nur Bargeld'),
-                value: cashOnly,
-                onChanged: (v) => setState(() => cashOnly = v),
-              ),
-              SwitchListTile(
-                title: const Text('Angepinnt'),
-                value: pinned,
-                onChanged: (v) => setState(() => pinned = v),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final title = titleController.text.trim();
-              if (title.isEmpty) return;
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, localSetState) {
+            final bottom = MediaQuery.of(ctx).viewInsets.bottom;
 
-              if (isEdit) {
-                await _infoCol.doc(doc.id).set({
-                  'title': title,
-                  'details': detailsController.text.trim().isEmpty
-                      ? null
-                      : detailsController.text.trim(),
-                  'link': linkController.text.trim().isEmpty
-                      ? null
-                      : linkController.text.trim(),
-                  'cashOnly': cashOnly,
-                  'pinned': pinned,
-                  'updatedAt': FieldValue.serverTimestamp(),
-                }, SetOptions(merge: true));
-              } else {
-                final last = await _infoCol.orderBy('order', descending: true).limit(1).get();
-                final nextOrder = last.docs.isEmpty
-                    ? 0
-                    : ((last.docs.first.data()['order'] as num?)?.toInt() ?? 0) + 1;
+            return Padding(
+              padding: EdgeInsets.only(left: 16, right: 16, bottom: bottom + 16, top: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Text(isEdit ? 'Info bearbeiten' : 'Neue Info',
+                          style: Theme.of(ctx).textTheme.titleLarge),
+                      const Spacer(),
+                      IconButton(
+                        tooltip: 'Schließen',
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: 'Titel'),
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: detailsController,
+                    decoration: const InputDecoration(labelText: 'Details'),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: linkController,
+                    decoration: const InputDecoration(labelText: 'Link (optional)'),
+                    keyboardType: TextInputType.url,
+                    textInputAction: TextInputAction.done,
+                  ),
+                  const SizedBox(height: 4),
+                  SwitchListTile(
+                    title: const Text('Nur Bargeld'),
+                    value: cashOnly,
+                    onChanged: (v) {
+                      HapticFeedback.selectionClick();
+                      localSetState(() => cashOnly = v);
+                    },
+                  ),
+                  SwitchListTile(
+                    title: const Text('Angepinnt'),
+                    value: pinned,
+                    onChanged: (v) {
+                      HapticFeedback.selectionClick();
+                      localSetState(() => pinned = v);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Abbrechen'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () async {
+                            final title = titleController.text.trim();
+                            if (title.isEmpty) return;
 
-                await _infoCol.add({
-                  'title': title,
-                  'details': detailsController.text.trim().isEmpty
-                      ? null
-                      : detailsController.text.trim(),
-                  'link': linkController.text.trim().isEmpty
-                      ? null
-                      : linkController.text.trim(),
-                  'cashOnly': cashOnly,
-                  'pinned': pinned,
-                  'order': nextOrder,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'updatedAt': FieldValue.serverTimestamp(),
-                });
-              }
-              if (mounted) Navigator.pop(context);
-            },
-            child: Text(isEdit ? 'Speichern' : 'Hinzufügen'),
-          ),
-        ],
-      ),
+                            HapticFeedback.mediumImpact();
+
+                            if (isEdit) {
+                              await _infoCol.doc(doc.id).set({
+                                'title': title,
+                                'details': detailsController.text.trim().isEmpty
+                                    ? null
+                                    : detailsController.text.trim(),
+                                'link': linkController.text.trim().isEmpty
+                                    ? null
+                                    : linkController.text.trim(),
+                                'cashOnly': cashOnly,
+                                'pinned': pinned,
+                                'updatedAt': FieldValue.serverTimestamp(),
+                              }, SetOptions(merge: true));
+                            } else {
+                              final last = await _infoCol
+                                  .orderBy('order', descending: true)
+                                  .limit(1)
+                                  .get();
+                              final nextOrder = last.docs.isEmpty
+                                  ? 0
+                                  : ((last.docs.first.data()['order'] as num?)?.toInt() ?? 0) + 1;
+
+                              await _infoCol.add({
+                                'title': title,
+                                'details': detailsController.text.trim().isEmpty
+                                    ? null
+                                    : detailsController.text.trim(),
+                                'link': linkController.text.trim().isEmpty
+                                    ? null
+                                    : linkController.text.trim(),
+                                'cashOnly': cashOnly,
+                                'pinned': pinned,
+                                'order': nextOrder,
+                                'createdAt': FieldValue.serverTimestamp(),
+                                'updatedAt': FieldValue.serverTimestamp(),
+                              });
+                            }
+
+                            if (!mounted) return;
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(isEdit ? 'Änderungen gespeichert' : 'Info hinzugefügt')),
+                            );
+                          },
+                          child: Text(isEdit ? 'Speichern' : 'Hinzufügen'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -420,7 +475,7 @@ class _InfosTabState extends State<InfosTab> {
                     ],
                   ),
                   trailing: PopupMenuButton<String>(
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       switch (value) {
                         case 'edit':
                           _addOrEditInfo(doc: doc);
@@ -429,7 +484,11 @@ class _InfosTabState extends State<InfosTab> {
                           _deleteInfo(doc.id, title);
                           break;
                         case 'pin':
-                          _infoCol.doc(doc.id).set({'pinned': !pinned, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+                          HapticFeedback.selectionClick(); // <— Haptik beim Toggle
+                          await _infoCol.doc(doc.id).set({
+                            'pinned': !pinned,
+                            'updatedAt': FieldValue.serverTimestamp(),
+                          }, SetOptions(merge: true));
                           break;
                       }
                     },

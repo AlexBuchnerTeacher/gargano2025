@@ -122,6 +122,7 @@ class _GarganoAppState extends State<GarganoApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Deine bestehenden Farbschemata
     const lightScheme = ColorScheme.light(
       primary: Color(0xFFFF7A00),
       primaryContainer: Color(0xFFFFB347),
@@ -142,17 +143,56 @@ class _GarganoAppState extends State<GarganoApp> {
       onSurface: Colors.white70,
     );
 
+    // Kompakte UI-Defaults für weniger vertikalen/horizontalen Platzverbrauch
+    ThemeData _compactTheme(ColorScheme scheme) {
+      return ThemeData(
+        useMaterial3: true,
+        colorScheme: scheme,
+        fontFamily: 'NotoSans', // aus pubspec.yaml
+        appBarTheme: const AppBarTheme(centerTitle: false),
+
+        // Global kompaktere Abstände/Tap-Targets
+        visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+        // Schlankere ListTiles (betrifft auch CheckboxListTile)
+        listTileTheme: const ListTileThemeData(
+          contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+          // 'dense' wird in M3 teils ignoriert, aber schadet nicht:
+          dense: true,
+        ),
+
+        // Kleinere Checkboxen / Tap-Ziele
+        checkboxTheme: const CheckboxThemeData(
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity(horizontal: -2, vertical: -2),
+        ),
+
+        // Schlankere TextButtons (z.B. "Eintrag hinzufügen")
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            minimumSize: const Size(0, 32), // kleiner als Standard
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+          ),
+        ),
+
+        // Leicht kompaktere Cards (global, falls du sie nutzt)
+        cardTheme: const CardThemeData(
+    elevation: 0.5,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(12)),
+    ),
+  ),
+      );
+    }
+
     return MaterialApp(
       title: 'Gargano 2025',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: lightScheme,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: darkScheme,
-      ),
+      theme: _compactTheme(lightScheme),
+      darkTheme: _compactTheme(darkScheme),
       themeMode: _themeMode,
       home: WelcomeScreen(onToggleTheme: _toggleThemeMode),
     );

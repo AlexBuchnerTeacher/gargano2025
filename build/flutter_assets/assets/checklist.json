@@ -1,0 +1,20 @@
+﻿{
+  "Dokumente": [
+    "Ausweis",
+    "Krankenkarte",
+    "Führerschein"
+  ],
+  "Küche": [
+    "Pfanne",
+    "Öl",
+    "Salz",
+    "Teller",
+    "Besteck"
+  ],
+  "Strand": [
+    "Handtuch",
+    "Sonnenschutz",
+    "Sonnenbrille",
+    "Badehose"
+  ]
+}
